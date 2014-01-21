@@ -1,3 +1,4 @@
+$ sudo yum install mono-core monodevelop
 $ svn co https://subversion.assembla.com/svn/sdrsharp/trunk sdrsharp
 $ cd sdrsharp
 $ git clone git:// <SDRSharp V4L2 plugin>
@@ -8,9 +9,10 @@ $ monodevelop SDRSharp.sln
 * Build > Build All
 * File > Quit
 
-Add line to file: SDRSharp/App.config
+* Add following line to SDRSharp/App.config file inside frontendPlugins tag
     <add key="Linux Kernel V4L2" value="SDRSharp.V4L2.LibV4LIO,SDRSharp.V4L2" />
 
-$ ln -s /usr/lib64/libv4l2.so Debug/
 $ ln -s /usr/lib64/libc-2.18.so Debug/
 $ mono Debug/SDRSharp.exe
+
+Antti Palosaari <crope@iki.fi>

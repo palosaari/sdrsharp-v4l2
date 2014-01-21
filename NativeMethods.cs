@@ -124,7 +124,30 @@ namespace SDRSharp.V4L2
 		// int open(const char *path, int oflag, ... );
 		[DllImport(LibC, EntryPoint = "open", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int open(string file, int oflag);
+		// int close(int fd);
+		[DllImport(LibC, EntryPoint = "close", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int close(int fd);
+		// void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+		[DllImport(LibC, EntryPoint = "mmap", CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr mmap(IntPtr addr, UInt32 length, int prot, int flags, int fd, Int64 offset);
+		// int munmap(void *addr, size_t length);
+		[DllImport(LibC, EntryPoint = "munmap", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int munmap(IntPtr addr, UInt32 length);
+		// int ioctl(int fildes, int request, ... /* arg */);
+		[DllImport(LibC, EntryPoint = "ioctl", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int ioctl(int fd, UInt64 request, ref v4l2_format fmt);
+		[DllImport(LibC, EntryPoint = "ioctl", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int ioctl(int fd, UInt64 request, ref v4l2_requestbuffers req);
+		[DllImport(LibC, EntryPoint = "ioctl", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int ioctl(int fd, UInt64 request, ref v4l2_buffer buf);
+		[DllImport(LibC, EntryPoint = "ioctl", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int ioctl(int fd, UInt64 request, IntPtr type);
+		[DllImport(LibC, EntryPoint = "ioctl", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int ioctl(int fd, UInt64 request, ref v4l2_ext_controls ext_ctrls);
+		[DllImport(LibC, EntryPoint = "ioctl", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int ioctl(int fd, UInt64 request, ref v4l2_frequency frequency);
 
+		/*
 		// int v4l2_open(const char *file, int oflag, ...);
 		[DllImport(LibV4L2, EntryPoint = "v4l2_open", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int v4l2_open(string file, int oflag);
@@ -161,5 +184,6 @@ namespace SDRSharp.V4L2
 		public static extern int v4l2_set_control(int fd, int cid, int value_);
 		// int v4l2_get_control(int fd, int cid);
 		// int v4l2_fd_open(int fd, int v4l2_flags);
+		*/
 	}
 }

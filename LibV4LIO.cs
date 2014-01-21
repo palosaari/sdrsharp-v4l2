@@ -125,7 +125,8 @@ namespace SDRSharp.V4L2
 			ext_ctrls.reserved[1] = 0;
 			ext_ctrls.controls = (IntPtr) p_ext_ctrl;
 
-			int v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_EXT_CTRLS, ref ext_ctrls); 
+			//int v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_EXT_CTRLS, ref ext_ctrls); 
+			int v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_S_EXT_CTRLS, ref ext_ctrls); 
 			Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_S_EXT_CTRLS ret = {0} id = {1} value64 = {2}", v4l2_r, id, value);
 		}
 		
@@ -151,7 +152,8 @@ namespace SDRSharp.V4L2
 				frequency.tuner = 0;
 				frequency.type = V4L2_TUNER_ADC;
 				frequency.frequency = (uint) value;
-				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
+				//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
+				v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
 				Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_S_FREQUENCY r = {0}", v4l2_r);
 			}
 		}
@@ -168,7 +170,8 @@ namespace SDRSharp.V4L2
 				frequency.tuner = 1;
 				frequency.type = V4L2_TUNER_RF;
 				frequency.frequency = (uint) value;
-				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
+				//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
+				v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
 				Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_S_FREQUENCY r = {0}", v4l2_r);
 			}
 		}
@@ -193,7 +196,7 @@ namespace SDRSharp.V4L2
 		{
 			Console.WriteLine("Open");
 
-//			_fd = NativeMethods.v4l2_open(_dev_file, O_RDWR);
+			//_fd = NativeMethods.v4l2_open(_dev_file, O_RDWR);
 			_fd = NativeMethods.open(_dev_file, O_RDWR);
 			Console.WriteLine("fd = {0}", _fd);
 			if (_fd < 0)
@@ -206,7 +209,8 @@ namespace SDRSharp.V4L2
 			fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U16LE;
 			Console.WriteLine("request fmt.pixelformat = {0}", fmt.fmt.sdr.pixelformat);
 			
-			var v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
+			//var v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
+			var v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
 			Console.WriteLine("v4l2_ioctl r = {0} sdr.pixelformat = {1}", v4l2_r, fmt.fmt.sdr.pixelformat);
 
 			if (fmt.fmt.sdr.pixelformat != V4L2_PIX_FMT_SDR_U16LE) {
@@ -218,7 +222,8 @@ namespace SDRSharp.V4L2
 		public void Close()
 		{
 			Console.WriteLine("Close");
-			NativeMethods.v4l2_close(_fd);
+			//NativeMethods.v4l2_close(_fd);
+			NativeMethods.close(_fd);
 		}
 
 		public void Start(SamplesAvailableDelegate callback)
@@ -231,7 +236,8 @@ namespace SDRSharp.V4L2
 			req.count = 10; // nbuffers to driver
 			req.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			req.memory = V4L2_MEMORY_MMAP;
-			v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_REQBUFS, ref req); 
+			//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_REQBUFS, ref req); 
+			v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_REQBUFS, ref req); 
 			Console.WriteLine("CMD64_VIDIOC_REQBUFS v4l2_ioctl r = {0} req.count = {1}", v4l2_r, req.count);
 			
 			
@@ -245,12 +251,14 @@ namespace SDRSharp.V4L2
 				buf.memory = V4L2_MEMORY_MMAP;
 				buf.index = n_buffers;
 				
-				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QUERYBUF, ref buf); 
-				
+				//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QUERYBUF, ref buf); 
+				v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_QUERYBUF, ref buf); 
+
 //				mmap[n_buffers].length = buf.length;
 //				mmap[n_buffers].start = NativeMethods.v4l2_mmap(IntPtr.Zero, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset);
 				mmap_length[n_buffers] = buf.length;
-				mmap_start[n_buffers] = NativeMethods.v4l2_mmap(IntPtr.Zero, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset);
+				//mmap_start[n_buffers] = NativeMethods.v4l2_mmap(IntPtr.Zero, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset);
+				mmap_start[n_buffers] = NativeMethods.mmap(IntPtr.Zero, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset);
 				Console.WriteLine("CMD64_VIDIOC_QUERYBUF v4l2_ioctl r = {0} mmap_start[n_buffers] = {1}", v4l2_r, mmap_start[n_buffers]);
 			}
 			
@@ -260,14 +268,16 @@ namespace SDRSharp.V4L2
 				buf.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 				buf.memory = V4L2_MEMORY_MMAP;
 				buf.index = i;
-				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
+				//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
+				v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
 				Console.WriteLine("CMD64_VIDIOC_QBUF v4l2_ioctl r = {0} buf.index = {1}", v4l2_r, buf.index);
 			}
 
 			// start streaming
 			int type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			int *ptr = & type;
-			v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_STREAMON, (IntPtr)ptr); 
+			//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_STREAMON, (IntPtr)ptr);
+			v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_STREAMON, (IntPtr)ptr);
 			Console.WriteLine("CMD64_VIDIOC_STREAMON v4l2_ioctl r = {0}", v4l2_r);
 			
 			_callback = callback;
@@ -289,12 +299,14 @@ namespace SDRSharp.V4L2
 			streaming = false;
 			
 			// stop streaming
-			v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_STREAMOFF, (IntPtr)ptr); 
+			//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_STREAMOFF, (IntPtr)ptr); 
+			v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_STREAMOFF, (IntPtr)ptr); 
 			Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_STREAMOFF r = {0}", v4l2_r);
 			
 			// v4l2_munmap buffers
 			for (int i = (int) n_buffers - 1; i >= 0; i--) {
-				NativeMethods.v4l2_munmap(mmap_start[i], mmap_length[i]);
+				//NativeMethods.v4l2_munmap(mmap_start[i], mmap_length[i]);
+				NativeMethods.munmap(mmap_start[i], mmap_length[i]);
 //				NativeMethods.v4l2_munmap(mmap[i].start, mmap[i].length);
 				Console.WriteLine("v4l2_munmap = {0}", i);
 			}
@@ -323,7 +335,8 @@ namespace SDRSharp.V4L2
 			while (streaming)
 			{
 				// request mmap buf from Kernel (fd is blocking mode)
-				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_DQBUF, ref buf); 
+				//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_DQBUF, ref buf); 
+				v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_DQBUF, ref buf); 
 				if (v4l2_r != 0) {
 					Console.WriteLine("v4l2_ioctl VIDIOC_DQBUF ret = {0}", v4l2_r);
 				}
@@ -348,7 +361,8 @@ namespace SDRSharp.V4L2
 				}
 
 				// return mmap buf to Kernel
-				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
+				//v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
+				v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
 				if (v4l2_r != 0) {
 					Console.WriteLine("v4l2_ioctl VIDIOC_QBUF ret = {0}", v4l2_r);
 				}
