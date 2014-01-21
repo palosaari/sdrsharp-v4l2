@@ -42,8 +42,11 @@ namespace SDRSharp.V4L2
 		private const UInt64 CMD64_VIDIOC_STREAMON     = 0x40045612;
 		private const UInt64 CMD64_VIDIOC_TRY_FMT      = 0xc0d05640;
 		
-		private const byte V4L2_BUF_TYPE_VIDEO_CAPTURE  = 1;
-		private const byte V4L2_MEMORY_MMAP             = 1;
+		private const byte V4L2_BUF_TYPE_SDR_CAPTURE   = 11;
+		private const byte V4L2_MEMORY_MMAP            = 1;
+
+		private const byte V4L2_TUNER_ADC              = 4;
+		private const byte V4L2_TUNER_RF               = 5;
 
 		private const byte PROT_READ  = 0x1;		// page can be read
 		private const byte PROT_WRITE = 0x2;		// page can be written
@@ -53,14 +56,15 @@ namespace SDRSharp.V4L2
 		private const int O_NONBLOCK  = 0x0004; //no delay
 
 		// pixformat V4L2 fourcc
-		private const uint V4L2_PIX_FMT_FLOAT  = 0x32334644;
+		private const uint V4L2_PIX_FMT_SDR_U8         = 0x38305544;
+		private const uint V4L2_PIX_FMT_SDR_U16LE      = 0x36315544;
 
 		private long _frequency = 100000000; // 100 MHz
 		private double _sampleRate = 2048000; // 2.048 Msps
 		private SamplesAvailableDelegate _callback;
 		private Thread _sampleThread;
 		private int _fd;
-		private string _dev_file = "/dev/video0";
+		private string _dev_file = "/dev/swradio0";
 		
 		private bool streaming;
 		// buffers
@@ -124,7 +128,6 @@ namespace SDRSharp.V4L2
 			int v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_EXT_CTRLS, ref ext_ctrls); 
 			Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_S_EXT_CTRLS ret = {0} id = {1} value64 = {2}", v4l2_r, id, value);
 		}
-
 		
 		private void vidioc_s_ext_ctrls(UInt32 id, Int64 value)
 		{
@@ -141,24 +144,32 @@ namespace SDRSharp.V4L2
 			get { return _sampleRate; }
 			set
 			{
-				Console.WriteLine("set Samplerate");
+				Console.WriteLine("Samplerate set {0}", value);
+				int v4l2_r;
 				_sampleRate = value;
-//				vidioc_s_ext_ctrls(CID_SAMPLING_RATE, (Int64) _sampleRate);
+				NativeMethods.v4l2_frequency frequency = new NativeMethods.v4l2_frequency();
+				frequency.tuner = 0;
+				frequency.type = V4L2_TUNER_ADC;
+				frequency.frequency = (uint) value;
+				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
+				Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_S_FREQUENCY r = {0}", v4l2_r);
 			}
 		}
-		
+
 		public long Frequency
 		{
 			get { return _frequency; }
 			set
 			{
-				Console.WriteLine("set Frequency");
+				Console.WriteLine("Frequency set {0}", value);
+				int v4l2_r;
 				_frequency = value;
-				vidioc_s_ext_ctrls(CID_TUNER_RF, _frequency);
-//				if (_frequency == 88510000)
-//					Samplerate = 1024000; // set sampling rate
-//				else
-//					Samplerate = 2048000; // set sampling rate
+				NativeMethods.v4l2_frequency frequency = new NativeMethods.v4l2_frequency();
+				frequency.tuner = 1;
+				frequency.type = V4L2_TUNER_RF;
+				frequency.frequency = (uint) value;
+				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FREQUENCY, ref frequency);
+				Console.WriteLine("v4l2_ioctl CMD64_VIDIOC_S_FREQUENCY r = {0}", v4l2_r);
 			}
 		}
 		
@@ -182,7 +193,8 @@ namespace SDRSharp.V4L2
 		{
 			Console.WriteLine("Open");
 
-			_fd = NativeMethods.v4l2_open(_dev_file, O_RDWR);
+//			_fd = NativeMethods.v4l2_open(_dev_file, O_RDWR);
+			_fd = NativeMethods.open(_dev_file, O_RDWR);
 			Console.WriteLine("fd = {0}", _fd);
 			if (_fd < 0)
 			{
@@ -190,16 +202,16 @@ namespace SDRSharp.V4L2
 			}
 			
 			NativeMethods.v4l2_format fmt = new NativeMethods.v4l2_format();
-			fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_FLOAT;
-			Console.WriteLine("request fmt.pixelformat = {0}", fmt.fmt.pix.pixelformat);
+			fmt.type = V4L2_BUF_TYPE_SDR_CAPTURE;
+			fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U16LE;
+			Console.WriteLine("request fmt.pixelformat = {0}", fmt.fmt.sdr.pixelformat);
 			
 			var v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
-			Console.WriteLine("v4l2_ioctl r = {0} fmt.pixelformat = {1}", v4l2_r, fmt.fmt.pix.pixelformat);
+			Console.WriteLine("v4l2_ioctl r = {0} sdr.pixelformat = {1}", v4l2_r, fmt.fmt.sdr.pixelformat);
 
-			if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_FLOAT) {
+			if (fmt.fmt.sdr.pixelformat != V4L2_PIX_FMT_SDR_U16LE) {
 				// throw exception?
-				Console.WriteLine("fmt.fmt.pix.pixelformat");
+				Console.WriteLine("fmt.fmt.sdr.pixelformat");
 			}
 		}
 
@@ -217,7 +229,7 @@ namespace SDRSharp.V4L2
 			
 			NativeMethods.v4l2_requestbuffers req = new NativeMethods.v4l2_requestbuffers();
 			req.count = 10; // nbuffers to driver
-			req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			req.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			req.memory = V4L2_MEMORY_MMAP;
 			v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_REQBUFS, ref req); 
 			Console.WriteLine("CMD64_VIDIOC_REQBUFS v4l2_ioctl r = {0} req.count = {1}", v4l2_r, req.count);
@@ -229,7 +241,7 @@ namespace SDRSharp.V4L2
 //			mmap = new Mmap [req.count];
 			
 			for (n_buffers = 0; n_buffers < req.count; n_buffers++) {
-				buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+				buf.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 				buf.memory = V4L2_MEMORY_MMAP;
 				buf.index = n_buffers;
 				
@@ -245,7 +257,7 @@ namespace SDRSharp.V4L2
 			//Exchange a buffer with the driver
 			for (uint i = 0; i < n_buffers; i++) {
 				//CLEAR(buf);
-				buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+				buf.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 				buf.memory = V4L2_MEMORY_MMAP;
 				buf.index = i;
 				v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_QBUF, ref buf);
@@ -253,7 +265,7 @@ namespace SDRSharp.V4L2
 			}
 
 			// start streaming
-			int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			int type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			int *ptr = & type;
 			v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_STREAMON, (IntPtr)ptr); 
 			Console.WriteLine("CMD64_VIDIOC_STREAMON v4l2_ioctl r = {0}", v4l2_r);
@@ -272,7 +284,7 @@ namespace SDRSharp.V4L2
 		{
 			Console.WriteLine("Stop");
 			int v4l2_r;
-			int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			int type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			int *ptr = & type;
 			streaming = false;
 			
@@ -300,11 +312,12 @@ namespace SDRSharp.V4L2
 		{
 			Console.WriteLine("ReceiveData");
 
-			IntPtr v4l2_buf;
+			UInt16 *v4l2_buf;
 			int v4l2_r;
 			int sampleCount;
+			Complex *iqBuffer;
 			
-			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			buf.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			buf.memory = V4L2_MEMORY_MMAP;
 
 			while (streaming)
@@ -316,12 +329,22 @@ namespace SDRSharp.V4L2
 				}
 					
 				// offer samples from Kernel to SDRsharp DSP
+				// convert to I/Q Complex
 				if (_callback != null)
 				{
 //					v4l2_buf = mmap[buf.index].start;
-					v4l2_buf = mmap_start[buf.index];
-					sampleCount = (int) buf.bytesused / 8;
-					_callback(this, (Complex*) v4l2_buf, sampleCount);
+					v4l2_buf = (UInt16 *) mmap_start[buf.index];
+					sampleCount = (int) buf.bytesused / 4; // 2 x 16-bit
+					iqBuffer = (Complex *) UnsafeBuffer.Create(sampleCount, sizeof(Complex));
+					var iqPtr = iqBuffer;
+					for (var i = 0; i < sampleCount; i++)
+					{
+						iqPtr->Imag = (*v4l2_buf++ - 32767.5f) / 32767.5f;
+						iqPtr->Real = (*v4l2_buf++ - 32767.5f) / 32767.5f;
+						iqPtr++;
+					}
+
+					_callback(this, iqBuffer, sampleCount);
 				}
 
 				// return mmap buf to Kernel

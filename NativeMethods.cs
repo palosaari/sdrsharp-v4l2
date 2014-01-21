@@ -6,6 +6,16 @@ namespace SDRSharp.V4L2
 	public class NativeMethods
 	{
 		private const string LibV4L2 = "v4l2";
+		private const string LibC = "c-2.18";
+
+		// TODO: size 32?
+		[StructLayout(LayoutKind.Explicit, Size = 32)]
+		public unsafe struct v4l2_format_sdr {
+			[FieldOffset(0)]
+			public UInt32 pixelformat;
+			[FieldOffset(4)]
+			public fixed Byte reserved[28];
+		}
 		
 		[StructLayout(LayoutKind.Sequential, Size = 32)]
 		public struct v4l2_pix_format {
@@ -23,6 +33,8 @@ namespace SDRSharp.V4L2
 		public struct Union_v4l2_format {
 			[FieldOffset(0)]
 			public v4l2_pix_format pix;
+			[FieldOffset(0)]
+			public v4l2_format_sdr sdr;
 		}
 		
 		[StructLayout(LayoutKind.Explicit, Size = 208)]
@@ -109,6 +121,10 @@ namespace SDRSharp.V4L2
 			public fixed UInt32 reserved[8];
 		}
 		
+		// int open(const char *path, int oflag, ... );
+		[DllImport(LibC, EntryPoint = "open", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int open(string file, int oflag);
+
 		// int v4l2_open(const char *file, int oflag, ...);
 		[DllImport(LibV4L2, EntryPoint = "v4l2_open", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int v4l2_open(string file, int oflag);
