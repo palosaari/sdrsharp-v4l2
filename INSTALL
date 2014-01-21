@@ -1,0 +1,11 @@
+$ svn co https://subversion.assembla.com/svn/sdrsharp/trunk sdrsharp
+$ sed -i 's/Format Version 12\.00/Format Version 11\.00/' SDRSharp.sln
+$ monodevelop SDRSharp.sln
+Solution SDRSharp => Add => Add Existing Project => V4L2
+* Build All
+* exit
+
+Add line to file: SDRSharp/App.config
+    <add key="Linux Kernel V4L2" value="SDRSharp.V4L2.LibV4LIO,SDRSharp.V4L2" />
+
+$ mono Debug/SDRSharp.exe
