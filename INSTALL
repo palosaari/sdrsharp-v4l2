@@ -6,13 +6,14 @@ $ sed -i 's/Format Version 12\.00/Format Version 11\.00/' SDRSharp.sln
 $ monodevelop SDRSharp.sln
 
 * Solution SDRSharp > Add > Add Existing Project... > V4L2 > SDRSharp.V4L2.csproj
+* Select Release|x86
 * Build > Build All
 * File > Quit
 
 * Add following line to SDRSharp/App.config file inside frontendPlugins tag
     <add key="Linux Kernel V4L2" value="SDRSharp.V4L2.LibV4LIO,SDRSharp.V4L2" />
 
-$ ln -s /usr/lib64/libc-2.18.so Debug/
-$ mono Debug/SDRSharp.exe
+$ ln -s /usr/lib64/libc-2.18.so Release/
+$ mono Release/SDRSharp.exe
 
 Antti Palosaari <crope@iki.fi>
