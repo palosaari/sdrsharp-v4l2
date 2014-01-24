@@ -6,7 +6,7 @@ namespace SDRSharp.V4L2
 	public class NativeMethods
 	{
 		private const string LibV4L2 = "v4l2";
-		private const string LibC = "c-2.18";
+		private const string LibC = "c";
 
 		// TODO: size 32?
 		[StructLayout(LayoutKind.Explicit, Size = 32)]
