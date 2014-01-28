@@ -76,7 +76,7 @@ namespace SDRSharp.V4L2
 		private NativeMethods.v4l2_buffer buf;
 		// pre-calculated LUT to speed up stream float conversion
 		private static readonly float *_lutPtr;
-		private static readonly UnsafeBuffer _lutBuffer = UnsafeBuffer.Create(256, sizeof(float));
+		private static readonly UnsafeBuffer _lutBuffer = UnsafeBuffer.Create(65536, sizeof(float));
 		
 		public bool IsStreaming
 		{
@@ -182,12 +182,11 @@ namespace SDRSharp.V4L2
 		static LibV4LIO()
 		{
 			Console.WriteLine("LibV4LIO() static");
+			// populate 16bit LUT
 			_lutPtr = (float *)_lutBuffer;
-
-			for (var i = 0; i < 256; i++)
+			for (var i = 0; i < 65536; i++)
 			{
-				_lutPtr[i] = (i - 127.5f) / 127.5f;
-				Console.WriteLine("LUT populate {0} : {1}", i, _lutPtr[i]);
+				_lutPtr[i] = (i - 32767.5f) / 32767.5f;
 			}
 		}
 		
@@ -221,7 +220,8 @@ namespace SDRSharp.V4L2
 			
 			NativeMethods.v4l2_format fmt = new NativeMethods.v4l2_format();
 			fmt.type = V4L2_BUF_TYPE_SDR_CAPTURE;
-			fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U8;
+			//fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U8;
+			fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U16LE;
 			Console.WriteLine("request fmt.pixelformat = {0}", fmt.fmt.sdr.pixelformat);
 			
 			//var v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
@@ -339,7 +339,7 @@ namespace SDRSharp.V4L2
 		{
 			Console.WriteLine("ReceiveData");
 
-			Byte *v4l2_buf;
+			UInt16 *v4l2_buf;
 			int v4l2_r;
 			int sampleCount;
 			Complex *iqBuffer;
@@ -361,21 +361,16 @@ namespace SDRSharp.V4L2
 				if (_callback != null)
 				{
 //					v4l2_buf = mmap[buf.index].start;
-					v4l2_buf = (Byte *) mmap_start[buf.index];
-					sampleCount = (int) buf.bytesused / 2; // 2 x 8-bit
+					v4l2_buf = (UInt16 *) mmap_start[buf.index];
+					sampleCount = (int) buf.bytesused / 4; // 2 x 16bit
 					iqBuffer = (Complex *) UnsafeBuffer.Create(sampleCount, sizeof(Complex));
 					var iqPtr = iqBuffer;
 					for (var i = 0; i < sampleCount; i++)
 					{
-						//iqPtr->Imag = (*v4l2_buf++ - 127.5f) / 127.5f;
-						//iqPtr->Real = (*v4l2_buf++ - 127.5f) / 127.5f;
-						//iqPtr->Imag = (*v4l2_buf++ - 32767.5f) / 32767.5f;
-						//iqPtr->Real = (*v4l2_buf++ - 32767.5f) / 32767.5f;
 						iqPtr->Imag = _lutPtr[*v4l2_buf++];
 						iqPtr->Real = _lutPtr[*v4l2_buf++];
 						iqPtr++;
 					}
-
 					_callback(this, iqBuffer, sampleCount);
 				}
 
