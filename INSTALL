@@ -13,7 +13,6 @@ $ monodevelop SDRSharp.sln
 * Select Release|x86
 * Build > Build All
 * File > Quit
-$ ln -s /usr/lib64/libc.so.6 Release/libc.so
 $ mono Release/SDRSharp.exe
 
 Antti Palosaari <crope@iki.fi>
