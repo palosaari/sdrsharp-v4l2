@@ -77,6 +77,7 @@ namespace SDRSharp.V4L2
 		// pre-calculated LUT to speed up stream float conversion
 		private static readonly float *_lutPtr;
 		private static readonly UnsafeBuffer _lutBuffer = UnsafeBuffer.Create(65536, sizeof(float));
+		private readonly ConfigDialog _gui;
 		
 		public bool IsStreaming
 		{
@@ -95,10 +96,14 @@ namespace SDRSharp.V4L2
 		
 		public void ShowSettingGUI(IWin32Window parent)
 		{
+			Console.WriteLine("ShowSettingGUI()");
+			_gui.Show();
 		}
 
 		public void HideSettingGUI()
 		{
+			Console.WriteLine("HideSettingGUI()");
+			_gui.Hide();
 		}
 		
 		private void vidioc_s_ext_ctrls_(UInt32 id, Int64 value, bool int64)
@@ -193,6 +198,7 @@ namespace SDRSharp.V4L2
 		public LibV4LIO()
 		{
 			Console.WriteLine("LibV4LIO()");
+			_gui = new ConfigDialog(this);
 		}
 
 		~LibV4LIO()
@@ -204,6 +210,7 @@ namespace SDRSharp.V4L2
 		public void Dispose()
 		{
 			Console.WriteLine("Dispose");
+			_gui.Dispose();
 		}
 
 		public void Open()
