@@ -56,8 +56,8 @@ namespace SDRSharp.V4L2
 		private const int O_NONBLOCK  = 0x0004; //no delay
 
 		// pixformat V4L2 fourcc
-		private const uint V4L2_PIX_FMT_SDR_U8         = 0x38305544;
-		private const uint V4L2_PIX_FMT_SDR_U16LE      = 0x36315544;
+		private const uint V4L2_SDR_FMT_CU8     = 'C' << 0 | 'U' << 8 | '0' << 16 | '8' << 24;
+		private const uint V4L2_SDR_FMT_CU16LE  = 'C' << 0 | 'U' << 8 | '1' << 16 | '6' << 24;
 
 		private long _frequency = 100000000; // 100 MHz
 		private double _sampleRate = 2048000; // 2.048 Msps
@@ -228,16 +228,16 @@ namespace SDRSharp.V4L2
 			NativeMethods.v4l2_format fmt = new NativeMethods.v4l2_format();
 			fmt.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 			//fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U8;
-			fmt.fmt.sdr.pixelformat = V4L2_PIX_FMT_SDR_U16LE;
+			fmt.fmt.sdr.pixelformat = V4L2_SDR_FMT_CU16LE;
 			Console.WriteLine("request fmt.pixelformat = {0}", fmt.fmt.sdr.pixelformat);
 			
 			//var v4l2_r = NativeMethods.v4l2_ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
 			var v4l2_r = NativeMethods.ioctl(_fd, CMD64_VIDIOC_S_FMT, ref fmt); 
 			Console.WriteLine("v4l2_ioctl r = {0} sdr.pixelformat = {1}", v4l2_r, fmt.fmt.sdr.pixelformat);
 
-			if (fmt.fmt.sdr.pixelformat != V4L2_PIX_FMT_SDR_U8) {
+			if (fmt.fmt.sdr.pixelformat != V4L2_SDR_FMT_CU16LE) {
 				// throw exception?
-				Console.WriteLine("fmt.fmt.sdr.pixelformat");
+				Console.WriteLine("Device didn't accept format!");
 			}
 		}
 
